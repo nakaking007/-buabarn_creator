@@ -1,6 +1,6 @@
 window.BUABARN_LICENSE_CONFIG = {
-    enabled: false,
-    validationUrl: '',
+    enabled: true,
+    validationUrl: 'https://script.google.com/macros/s/AKfycbwa3RsYEDsE1WjZzucxOI4pVQi1H0YUwciZrtd2dgIGJt9Ndjgr1e_OFyDMvI-ntwQj/exec',
     appName: 'Buabarn VIP Creater Tools',
     contactName: 'ดร.เขมวันต์',
     lineId: 'charnb015',
