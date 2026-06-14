@@ -277,19 +277,26 @@ function openBundledFile(path) {
     window.open(path, '_blank', 'noopener');
 }
 
-document.getElementById('btn-back').addEventListener('click', backToHome);
-document.getElementById('btn-back-music').addEventListener('click', backToHome);
-document.getElementById('manual-btn').addEventListener('click', openManual);
-document.getElementById('install-guide-btn').addEventListener('click', openInstallGuide);
-document.getElementById('local-video-btn').addEventListener('click', openLocalVideoGuide);
-document.getElementById('sync-web-btn').addEventListener('click', syncFromWeb);
-document.getElementById('btn-save-ai').addEventListener('click', saveAiConfig);
-document.getElementById('btn-save-image').addEventListener('click', saveImageConfig);
-document.getElementById('btn-save-video').addEventListener('click', saveVideoConfig);
-document.getElementById('btn-paste-ai').addEventListener('click', () => pasteFromClipboard(aiKey));
-document.getElementById('btn-paste-image').addEventListener('click', () => pasteFromClipboard(imageKey));
-document.getElementById('btn-paste-video').addEventListener('click', () => pasteFromClipboard(videoKey));
-document.getElementById('btn-generate-music').addEventListener('click', generateMusicOnly);
+function bindClick(id, handler) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.addEventListener('click', handler);
+    }
+}
+
+bindClick('btn-back', backToHome);
+bindClick('btn-back-music', backToHome);
+bindClick('manual-btn', openManual);
+bindClick('install-guide-btn', openInstallGuide);
+bindClick('local-video-btn', openLocalVideoGuide);
+bindClick('sync-web-btn', syncFromWeb);
+bindClick('btn-save-ai', saveAiConfig);
+bindClick('btn-save-image', saveImageConfig);
+bindClick('btn-save-video', saveVideoConfig);
+bindClick('btn-paste-ai', () => pasteFromClipboard(aiKey));
+bindClick('btn-paste-image', () => pasteFromClipboard(imageKey));
+bindClick('btn-paste-video', () => pasteFromClipboard(videoKey));
+bindClick('btn-generate-music', generateMusicOnly);
 document.querySelectorAll('.api-link').forEach((button) => button.addEventListener('click', openApiSource));
 imagePlan.addEventListener('change', updateProductionPanels);
 videoPlan.addEventListener('change', updateProductionPanels);
