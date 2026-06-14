@@ -1,0 +1,3 @@
+licenseKey,customerName,lineId,email,plan,startsAt,expiresAt,active,note
+BUA-M-TEST-001,ลูกค้าทดสอบรายเดือน,charnb015,charnb020@gmail.com,monthly,2026-06-14T00:00:00+07:00,2026-07-14T00:00:00+07:00,TRUE,ตัวอย่างรายเดือน 30 วัน
+BUA-LIFE-TEST-001,ลูกค้าทดสอบตลอดชีพ,charnb015,charnb020@gmail.com,lifetime,2026-06-14T00:00:00+07:00,,TRUE,ตัวอย่างตลอดชีพ

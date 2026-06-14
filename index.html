@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buabarn VIP Creater Tools</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -15,14 +16,13 @@
 
     <main>
         <section id="home-view">
-            <div class="section-title">เลือกงานที่ต้องการสร้าง</div>
             <div class="home-action-row">
                 <button id="manual-btn" class="manual-btn" type="button">คู่มือการใช้</button>
-                <button id="install-guide-btn" class="manual-btn install utility-hidden" type="button">คู่มือติดตั้ง</button>
-                <button id="local-video-btn" class="manual-btn accent utility-hidden" type="button">ทำวิดีโอในเครื่อง</button>
+                <a class="manual-btn install" href="#settings-panel">ตั้งค่า</a>
+                <a class="manual-btn accent" href="#credit-panel">เครดิต / ติดต่อ</a>
             </div>
 
-            <details class="settings-panel">
+            <details id="settings-panel" class="settings-panel">
                 <summary>ตั้งค่า</summary>
                 <p class="api-simple-note">ใส่ API เฉพาะเมื่ออยากกดสร้างภาพหรือวิดีโอจริง ถ้าไม่ใส่ ระบบยังสร้าง prompt และ output ให้ได้</p>
                 <div class="api-source-board" aria-label="ลิงก์รับ API">
@@ -86,6 +86,26 @@
                 </div>
             </details>
 
+            <section id="credit-panel" class="credit-panel">
+                <div class="panel-title">เครดิต / ติดต่อใช้งาน</div>
+                <div class="credit-grid">
+                    <div class="price-card">
+                        <span>รายเดือน</span>
+                        <strong>399 บาท</strong>
+                    </div>
+                    <div class="price-card lifetime">
+                        <span>ตลอดชีพ</span>
+                        <strong>1,999 บาท</strong>
+                    </div>
+                </div>
+                <p>ติดต่อ ดร.เขมวันต์<br>กรุณาส่งสลิปการโอนมาที่<br>ID Line: charnb015<br>e-mail: charnb020@gmail.com</p>
+                <div class="credit-actions">
+                    <a href="license-admin.html" target="_blank" rel="noopener">สร้าง License</a>
+                    <a href="LICENSE_SYSTEM_SETUP.txt" target="_blank" rel="noopener">คู่มือระบบสิทธิ์</a>
+                </div>
+            </section>
+
+            <div class="section-title">เลือกงานที่ต้องการสร้าง</div>
             <div id="mission-grid" class="mission-grid" aria-label="เลือกโหมดสร้างงาน"></div>
         </section>
 
@@ -256,6 +276,8 @@
     <script src="production-specs.js"></script>
     <script src="production-input-specs.js"></script>
     <script src="engine-logic.js"></script>
+    <script src="license-config.js"></script>
+    <script src="license-gate.js"></script>
     <script src="main-controller.js"></script>
 </body>
 </html>

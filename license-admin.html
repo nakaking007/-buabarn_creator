@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buabarn License Admin Helper</title>
+    <style>
+        body { margin: 0; background: #020815; color: #f4fbff; font-family: "Segoe UI", Tahoma, sans-serif; }
+        main { width: min(100%, 760px); margin: 0 auto; padding: 20px; }
+        .card { border: 1px solid rgba(22,243,255,.32); border-radius: 16px; background: rgba(4,18,38,.86); padding: 18px; box-shadow: 0 0 24px rgba(22,243,255,.14); }
+        h1 { margin: 0 0 12px; color: #16f3ff; }
+        label { display: block; margin-top: 12px; color: #9bd0df; font-weight: 700; }
+        input, select, textarea, button { width: 100%; box-sizing: border-box; margin-top: 6px; padding: 11px; border-radius: 10px; border: 1px solid rgba(22,243,255,.28); background: #010814; color: #f4fbff; font: inherit; }
+        button { cursor: pointer; margin-top: 14px; background: linear-gradient(180deg, rgba(22,243,255,.24), rgba(0,55,120,.55)); font-weight: 900; }
+        textarea { min-height: 120px; }
+        .hint { color: #9bd0df; line-height: 1.6; }
+    </style>
+</head>
+<body>
+<main>
+    <div class="card">
+        <h1>Buabarn License Admin Helper</h1>
+        <p class="hint">ใช้ช่วยสร้างแถวข้อมูลสำหรับวางใน Google Sheet เท่านั้น ยังไม่ใช่ระบบรับเงินอัตโนมัติ</p>
+        <label>ชื่อลูกค้า</label>
+        <input id="customerName" placeholder="เช่น คุณสมชาย">
+        <label>ID Line</label>
+        <input id="lineId" placeholder="เช่น customer_line">
+        <label>e-mail</label>
+        <input id="email" placeholder="customer@email.com">
+        <label>แพ็กเกจ</label>
+        <select id="plan">
+            <option value="monthly">รายเดือน 399 บาท / 30 วัน</option>
+            <option value="lifetime">ตลอดชีพ 1,999 บาท</option>
+        </select>
+        <button type="button" onclick="makeLicense()">สร้าง License Row</button>
+        <label>แถวสำหรับวางใน Google Sheet</label>
+        <textarea id="result" readonly></textarea>
+        <button type="button" onclick="copyResult()">Copy</button>
+    </div>
+</main>
+<script>
+function makeLicense() {
+    const now = new Date();
+    const plan = document.getElementById('plan').value;
+    const prefix = plan === 'lifetime' ? 'BUA-LIFE' : 'BUA-M';
+    const key = `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const startsAt = toIsoBangkok(now);
+    const expiresAt = plan === 'lifetime' ? '' : toIsoBangkok(new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000));
+    const row = [
+        key,
+        document.getElementById('customerName').value.trim(),
+        document.getElementById('lineId').value.trim(),
+        document.getElementById('email').value.trim(),
+        plan,
+        startsAt,
+        expiresAt,
+        'TRUE',
+        plan === 'lifetime' ? 'ตลอดชีพ' : 'รายเดือน 30 วัน'
+    ].join(',');
+    document.getElementById('result').value = row;
+}
+
+function toIsoBangkok(date) {
+    const bangkok = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+    return bangkok.toISOString().replace('Z', '+07:00');
+}
+
+function copyResult() {
+    navigator.clipboard.writeText(document.getElementById('result').value);
+    alert('คัดลอกแล้ว');
+}
+</script>
+</body>
+</html>
