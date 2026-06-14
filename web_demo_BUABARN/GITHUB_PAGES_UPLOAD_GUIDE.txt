@@ -1,0 +1,40 @@
+วิธีอัปเว็บ Buabarn VIP ขึ้น GitHub Pages
+
+Repo:
+https://github.com/nakaking007/-buabarn_creator
+
+เหตุผลที่ Codex อัปให้ตรงๆ ยังไม่ได้:
+- Browser ยังไม่ได้ login GitHub
+- GitHub connector ยังโดน 403 ตอนเขียนไฟล์
+- เครื่องนี้ยังไม่มี git ที่ใช้งานได้
+
+วิธีทำแบบง่าย:
+1. เปิด https://github.com/nakaking007/-buabarn_creator
+2. Login GitHub
+3. กด Add file > Upload files
+4. ลากไฟล์ทั้งหมดในโฟลเดอร์ web_demo_BUABARN เข้าไป
+   ห้ามลากทั้งโฟลเดอร์ ให้เข้าไปข้างในโฟลเดอร์แล้วเลือกไฟล์ทั้งหมด
+5. กด Commit changes
+6. เข้า Settings > Pages
+7. Source เลือก Deploy from a branch
+8. Branch เลือก main และ folder เลือก /root
+9. กด Save
+10. รอ 1-3 นาที จะได้ลิงก์เว็บ
+
+ไฟล์สำคัญที่ต้องมี:
+- index.html
+- readme.html
+- styles.css
+- main-controller.js
+- engine-logic.js
+- production-specs.js
+- production-input-specs.js
+- ai-bridge.js
+- storage-vault.js
+- web-scraper.js
+- assets/
+- .nojekyll
+
+หมายเหตุ:
+- ถ้าใช้เว็บตัวอย่างแบบเต็ม ให้ upload ทั้งชุดใน web_demo_BUABARN
+- ถ้าหน้า GitHub ขอ login หรือยืนยันสิทธิ์ ต้องให้นายท่านกดเอง
