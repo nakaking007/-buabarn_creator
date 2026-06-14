@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Buabarn VIP Creater Tools</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="brand-hero">
+        <img class="brand-logo" src="buabarn-lotus-logo.png" alt="Buabarn lotus logo">
+        <div class="brand-word">Buabarn VIP Creater Tools</div>
+        <div class="brand-status">STORY • IMAGE • VIDEO • VOICE • SHOP</div>
+        <div class="creator-credit">ผู้จัดทำ ดร.เขมวันต์ ด้วยระบบ Codex ChatGPT • สงวนลิขสิทธิ์</div>
+    </header>
+
+    <main>
+        <section id="home-view">
+            <div class="section-title">เลือกงานที่ต้องการสร้าง</div>
+            <div class="home-action-row">
+                <button id="manual-btn" class="manual-btn" type="button">คู่มือการใช้</button>
+                <button id="install-guide-btn" class="manual-btn install utility-hidden" type="button">คู่มือติดตั้ง</button>
+                <button id="local-video-btn" class="manual-btn accent utility-hidden" type="button">ทำวิดีโอในเครื่อง</button>
+            </div>
+
+            <details class="settings-panel">
+                <summary>ตั้งค่า</summary>
+                <p class="api-simple-note">ใส่ API เฉพาะเมื่ออยากกดสร้างภาพหรือวิดีโอจริง ถ้าไม่ใส่ ระบบยังสร้าง prompt และ output ให้ได้</p>
+                <div class="api-source-board" aria-label="ลิงก์รับ API">
+                    <div class="api-source-group">
+                        <div class="api-source-title">ลิงก์ API ฟรี/ทดลอง สำหรับภาพนิ่ง</div>
+                        <button type="button" class="api-link" data-url="https://huggingface.co/settings/tokens">Hugging Face</button>
+                        <button type="button" class="api-link" data-url="https://fal.ai/dashboard/keys">fal.ai</button>
+                        <button type="button" class="api-link" data-url="https://replicate.com/account/api-tokens">Replicate</button>
+                    </div>
+                    <div class="api-source-group">
+                        <div class="api-source-title">ลิงก์ API ฟรี/ทดลอง สำหรับวิดีโอ</div>
+                        <button type="button" class="api-link" data-url="https://fal.ai/dashboard/keys">fal.ai</button>
+                        <button type="button" class="api-link" data-url="https://dev.runwayml.com">Runway</button>
+                        <button type="button" class="api-link" data-url="https://replicate.com/account/api-tokens">Replicate</button>
+                    </div>
+                </div>
+
+                <div class="setting-block hidden-setting">
+                    <label class="toggle-row"><input type="checkbox" id="ai-enabled">ใช้ AI เขียนงาน</label>
+                    <select id="ai-provider">
+                        <option value="openrouter">OpenRouter</option>
+                    </select>
+                    <input type="password" id="ai-key" placeholder="วาง OpenRouter API Key ที่นี่">
+                    <input type="text" id="ai-model" placeholder="ไม่ต้องใส่ก็ได้ ระบบใช้ google/gemini-2.5-flash-lite">
+                    <input type="text" id="ai-endpoint" placeholder="ไม่ต้องใส่ ยกเว้นใช้ API ส่วนตัว">
+                    <div class="button-row">
+                        <button class="btn-save" id="btn-paste-ai" type="button">วาง API</button>
+                        <button class="btn-save" id="btn-save-ai" type="button">บันทึก AI เขียนงาน</button>
+                    </div>
+                    <p id="ai-status" class="ai-status">ยังไม่เชื่อมต่อ AI เขียนงาน</p>
+                </div>
+
+                <div class="setting-block">
+                    <label class="toggle-row"><input type="checkbox" id="image-enabled">API สำหรับภาพนิ่ง</label>
+                    <input type="password" id="image-key" placeholder="วาง API ภาพ">
+                    <input type="text" id="image-model" class="technical-field" placeholder="รุ่นภาพ ไม่ต้องใส่ก็ได้">
+                    <div class="button-row technical-actions">
+                        <button class="btn-save" id="btn-paste-image" type="button">วาง API</button>
+                        <button class="btn-save" id="btn-save-image" type="button">บันทึก API ภาพ</button>
+                    </div>
+                    <p id="image-status" class="ai-status">ยังไม่ได้กรอก API สำหรับสร้างภาพ</p>
+                </div>
+
+                <div class="setting-block">
+                    <label class="toggle-row"><input type="checkbox" id="video-enabled">API สำหรับวิดีโอ</label>
+                    <input type="password" id="video-key" placeholder="วาง API วิดีโอ">
+                    <input type="text" id="video-model" class="technical-field" placeholder="รุ่นวิดีโอ ไม่ต้องใส่ก็ได้">
+                    <div class="button-row technical-actions">
+                        <button class="btn-save" id="btn-paste-video" type="button">วาง API</button>
+                        <button class="btn-save" id="btn-save-video" type="button">บันทึก API วิดีโอ</button>
+                    </div>
+                    <p id="video-status" class="ai-status">ยังไม่ได้กรอก API สำหรับสร้างวิดีโอ</p>
+                </div>
+            </details>
+
+            <div id="mission-grid" class="mission-grid" aria-label="เลือกโหมดสร้างงาน"></div>
+        </section>
+
+        <section id="command-center" class="command-center" hidden>
+            <div class="nav-bar">
+                <button class="btn-back" id="btn-back" type="button">หน้าแรก</button>
+                <span id="mission-title" class="mission-title"></span>
+            </div>
+
+            <div class="control-group">
+                <label for="main-desc">ไอเดีย / เรื่อง / รายละเอียดงาน</label>
+                <textarea id="main-desc" rows="6" placeholder="เช่น หญิงสาวชุดขาวคืนวันเพ็ญนั่งรอพญานาคสีดำตาแดง ริมแม่น้ำ แสงจันทร์ ลึกลับสมจริง"></textarea>
+            </div>
+
+            <section id="category-input-panel" class="dynamic-input-panel">
+                <div id="category-input-title" class="panel-title">Input เฉพาะหมวด</div>
+                <div id="category-fields" class="dynamic-field-grid"></div>
+            </section>
+
+            <div class="compact-grid">
+                <div class="control-group">
+                    <label for="tone-select">โทนงาน</label>
+                    <select id="tone-select">
+                        <option value="อบอุ่น พรีเมียม และเล่าเรื่องชัด">อบอุ่น พรีเมียม</option>
+                        <option value="ไวรัล ดึงสายตาเร็ว และขายได้">ไวรัลขายได้</option>
+                        <option value="ภาพยนตร์ ดราม่า ลึกซึ้ง">ภาพยนตร์ดราม่า</option>
+                        <option value="ลึกลับ ศักดิ์สิทธิ์ และน่าติดตาม">ลึกลับศักดิ์สิทธิ์</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="character-select">ประเภทงาน / ตัวละคร</label>
+                <select id="character-select">
+                    <option value="ตัวละครใหม่ตามคำสั่งผู้ใช้">ตัวละครใหม่</option>
+                    <option value="ป้าพริ้ง นักเล่าเรื่องขายของ อารมณ์ดี พูดจริงใจ">ป้าพริ้ง</option>
+                    <option value="สายพานนักรีวิว พูดเร็ว มีจังหวะตลก ปิดการขายคม">สายพานนักรีวิว</option>
+                    <option value="นางแบบพรีเมียม ภาพสวย สุภาพ มั่นใจ">นางแบบพรีเมียม</option>
+                    <option value="นายแบบพรีเมียม สุขุม ทันสมัย เหมาะกับสินค้าไลฟ์สไตล์">นายแบบพรีเมียม</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="dna-input">ส่วนประกอบของภาพ / เครื่องแต่งกาย / แบรนด์</label>
+                <input type="text" id="dna-input" placeholder="เช่น ชุดขาว ผมยาว นั่งริมแม่น้ำ สีหน้าเฝ้ารอ เกล็ดพญานาคสีดำตาแดง">
+            </div>
+
+            <div class="reference-panel">
+                <div class="panel-title">ภาพต้นฉบับอ้างอิง 3 ภาพ</div>
+                <div class="reference-grid">
+                    <label class="file-tile">ภาพ 1<input type="file" id="ref-image-1" accept="image/*"></label>
+                    <label class="file-tile">ภาพ 2<input type="file" id="ref-image-2" accept="image/*"></label>
+                    <label class="file-tile">ภาพ 3<input type="file" id="ref-image-3" accept="image/*"></label>
+                </div>
+                <div id="reference-preview" class="reference-preview"></div>
+            </div>
+
+            <div class="compact-grid">
+                <div class="control-group">
+                    <label for="scene-count">จำนวนฉาก / จำนวน prompt</label>
+                    <select id="scene-count">
+                        <option value="3">3 ฉาก</option>
+                        <option value="5">5 ฉาก</option>
+                        <option value="7">7 ฉาก</option>
+                        <option value="10">10 ฉาก</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="production-layout">
+                <div class="production-box image-box">
+                    <div class="panel-title">พร้อมท์ภาพ</div>
+                    <label for="image-plan">แผนสร้างภาพ</label>
+                    <select id="image-plan">
+                        <option value="scene">สร้างภาพรายฉาก</option>
+                        <option value="none">ไม่เลือกภาพ</option>
+                    </select>
+                </div>
+                <div class="production-box video-box">
+                    <div class="panel-title">กล่องวิดีโอ</div>
+                    <label for="video-plan">แผนสร้างวิดีโอ</label>
+                    <select id="video-plan">
+                        <option value="none">ไม่เลือกวิดีโอ</option>
+                        <option value="scene">สร้างวิดีโอรายฉาก</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="voice-panel" class="option-panel">
+                <div class="panel-title">เสียงประกอบสำหรับวิดีโอเท่านั้น</div>
+                <div class="compact-grid">
+                    <div class="control-group">
+                        <label for="voice-type">เสียงบรรยาย</label>
+                        <select id="voice-type">
+                            <option value="เสียงผู้หญิงอบอุ่น ชัดเจน เหมาะกับรีวิวสินค้า">ผู้หญิงอบอุ่น</option>
+                            <option value="เสียงผู้ชายสุขุม น่าเชื่อถือ เหมาะกับสารคดี">ผู้ชายสารคดี</option>
+                            <option value="เสียงผู้หญิงนุ่มนวล สไตล์วิดีโอพรีเมียม">ผู้หญิงนุ่มนวล</option>
+                            <option value="เสียงผู้ชายนุ่มลึก สไตล์เล่าเรื่องลึกลับ">ผู้ชายลึกลับ</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="voice-target">การใช้เสียง</label>
+                        <select id="voice-target">
+                            <option value="voice over narration">Voice Over</option>
+                            <option value="documentary narration">สารคดี</option>
+                            <option value="character dialogue">เสียงพูดตัวละคร</option>
+                            <option value="sales presenter voice">ขายสินค้า</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="audio-sample">เสียง/วิดีโอตัวอย่าง</label>
+                    <input type="file" id="audio-sample" accept="audio/*,video/*">
+                </div>
+                <div id="audio-preview" class="audio-preview"></div>
+            </div>
+
+            <button id="sync-web-btn" class="secondary-btn utility-hidden" type="button">อ่านชื่อ/คำอธิบายจากแท็บเว็บ</button>
+            <button class="btn-ignite" id="btn-ignite" type="button">ผลิตชิ้นงาน</button>
+        </section>
+
+        <section id="music-center" class="command-center" hidden>
+            <div class="nav-bar">
+                <button class="btn-back" id="btn-back-music" type="button">หน้าแรก</button>
+                <span class="mission-title">เพลงสำหรับ Suno</span>
+            </div>
+            <div class="production-box music-box">
+                <div class="panel-title">กล่องเพลง</div>
+                <div class="control-group">
+                    <label for="music-idea">ไอเดียเพลง</label>
+                    <textarea id="music-idea" rows="5" placeholder="เช่น เพลงธรรมะลึกลับเกี่ยวกับพญานาคและดอกบัวบาน"></textarea>
+                </div>
+                <section class="dynamic-input-panel">
+                    <div class="panel-title">Input เฉพาะเพลง</div>
+                    <div id="music-extra-fields" class="dynamic-field-grid"></div>
+                </section>
+                <div class="compact-grid">
+                <div class="control-group">
+                    <label for="music-style">แนวเพลง</label>
+                    <select id="music-style">
+                        <option value="Thai pop cinematic, emotional, warm vocal">Thai Pop Cinematic</option>
+                        <option value="ลูกทุ่งร่วมสมัย อบอุ่น จำง่าย เหมาะกับขายสินค้า">ลูกทุ่งร่วมสมัย</option>
+                        <option value="lo-fi meditation, soft ambient, calm Buddhist storytelling">Lo-fi Meditation</option>
+                        <option value="epic fantasy orchestral, Thai naga mystery mood">Epic Fantasy Naga</option>
+                        <option value="upbeat commercial jingle, catchy hook, short chorus">เพลงโฆษณา / Jingle</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="singer-type">ใครร้อง</label>
+                    <select id="singer-type">
+                        <option value="Thai female warm vocal">นักร้องหญิงเสียงอบอุ่น</option>
+                        <option value="Thai male deep documentary vocal">นักร้องชายเสียงลึก</option>
+                        <option value="duet male and female vocal">ร้องคู่ชายหญิง</option>
+                        <option value="soft choir backing vocal">ประสานเสียงนุ่ม</option>
+                    </select>
+                </div>
+                </div>
+            </div>
+            <button class="btn-ignite" id="btn-generate-music" type="button">ผลิตเพลง</button>
+        </section>
+
+        <section id="output-vault" class="output-vault" aria-live="polite"></section>
+    </main>
+
+    <script src="storage-vault.js"></script>
+    <script src="web-scraper.js"></script>
+    <script src="ai-bridge.js"></script>
+    <script src="production-specs.js"></script>
+    <script src="production-input-specs.js"></script>
+    <script src="engine-logic.js"></script>
+    <script src="main-controller.js"></script>
+</body>
+</html>
