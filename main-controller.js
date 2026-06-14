@@ -117,10 +117,11 @@ function hydrateVideoForm(config) {
 }
 
 function collectAiConfig() {
+    const apiKey = cleanKeyInput(aiKey.value);
     return {
-        enabled: aiEnabled.checked,
+        enabled: Boolean(apiKey),
         provider: aiProvider.value,
-        apiKey: cleanKeyInput(aiKey.value),
+        apiKey,
         model: aiModel.value.trim(),
         endpoint: aiEndpoint.value.trim()
     };
@@ -171,8 +172,8 @@ async function saveVideoConfig() {
 }
 
 function updateAiStatus(config, prefix = '') {
-    const ready = config.enabled && config.apiKey;
-    aiStatus.textContent = ready ? `${prefix} พร้อมใช้ AI เขียนงาน` : 'ยังไม่เชื่อมต่อ AI เขียนงาน';
+    const ready = Boolean(config.apiKey);
+    aiStatus.textContent = ready ? `${prefix} พร้อมใช้ AI จริงสำหรับเขียนงาน` : 'ยังไม่ได้กรอก API สำหรับ AI เขียนงาน ระบบจะใช้ template สำรอง';
     aiStatus.classList.toggle('ready', Boolean(ready));
 }
 
@@ -329,13 +330,16 @@ document.getElementById('btn-ignite').addEventListener('click', async () => {
     await AIBridge.saveImageConfig(collectImageConfig());
     await AIBridge.saveVideoConfig(collectVideoConfig());
 
-    renderResult(localPlan, 'planning');
-
-    if (!textConfig.enabled || !textConfig.apiKey) {
+    if (!textConfig.apiKey) {
+        renderResult(localPlan, 'planning');
         return;
     }
 
     setBusy(true);
+    const statusCard = renderResult({
+        fullText: 'กำลังให้ AI จริงประมวลผลจาก input ทั้งหมด ถ้า API ใช้ไม่ได้ ระบบจะแจ้งสาเหตุและใช้ template สำรอง',
+        display: '<strong>โหมด AI จริง</strong><p>กำลังประมวลผลผ่าน API ที่ตั้งค่าไว้...</p>'
+    }, 'planning');
     try {
         const aiResult = await AIBridge.generate({
             config: textConfig,
@@ -343,12 +347,14 @@ document.getElementById('btn-ignite').addEventListener('click', async () => {
             context: { system: localPlan.request.system }
         });
         if (aiResult.text) {
+            statusCard.remove();
             renderResult(engine.renderAiResult(aiResult), 'final');
         }
     } catch (error) {
+        statusCard.remove();
         renderResult({
-            fullText: localPlan.fullText,
-            display: `<strong>เชื่อม AI ไม่สำเร็จ</strong><p>${escapeHtml(error.message)}</p>`
+            fullText: `# ใช้ Template สำรอง เพราะ AI จริงไม่สำเร็จ\n\nสาเหตุ:\n${formatApiError(error)}\n\n${localPlan.fullText}`,
+            display: `<strong>AI จริงไม่สำเร็จ ใช้ Template สำรอง</strong><p>${escapeHtml(formatApiError(error))}</p>`
         }, 'error');
     } finally {
         setBusy(false);
@@ -482,7 +488,7 @@ async function createMediaFromCard(card, type) {
 async function createImagePreview(card, imageConfig, prompt) {
     const preview = card.querySelector('.image-preview');
     if (!imageConfig.enabled || !imageConfig.apiKey) {
-        preview.innerHTML = '<p>ยังไม่ได้ใส่ Hugging Face Token สำหรับสร้างภาพ</p>';
+        preview.innerHTML = '<p>ยังไม่ได้ใส่ API สำหรับสร้างภาพ กรุณาใส่ Hugging Face Token หรือ API ที่รองรับในหน้า ตั้งค่า</p>';
         return;
     }
     preview.innerHTML = '<p>กำลังสร้างภาพตัวอย่าง...</p>';
@@ -501,7 +507,7 @@ async function createImagePreview(card, imageConfig, prompt) {
 async function createVideoPreview(card, videoConfig, prompt) {
     const preview = card.querySelector('.video-preview');
     if (!videoConfig.enabled || !videoConfig.apiKey) {
-        preview.innerHTML = '<p>ยังไม่ได้ใส่ Hugging Face Token สำหรับสร้างวิดีโอ</p>';
+        preview.innerHTML = '<p>ยังไม่ได้ใส่ API สำหรับสร้างวิดีโอ กรุณาใส่ Token/API ที่รองรับในหน้า ตั้งค่า</p>';
         return;
     }
     preview.innerHTML = '<p>กำลังสร้างวิดีโอตัวอย่าง...</p>';
@@ -589,16 +595,22 @@ function copyToClipboard(text) {
 function formatApiError(error) {
     const message = String(error?.message || error || '');
     if (message.includes('Failed to fetch') || message.includes('ENOTFOUND') || message.includes('NetworkError')) {
-        return 'เชื่อมต่อ Hugging Face ไม่สำเร็จ กรุณาตรวจอินเทอร์เน็ต DNS ไฟร์วอลล์ หรือทดลองเปิด https://huggingface.co/settings/tokens ใน Chrome ก่อน';
+        return 'เชื่อมต่อ API ไม่สำเร็จ กรุณาตรวจอินเทอร์เน็ต DNS ไฟร์วอลล์ หรือเปิดหน้าเว็บผู้ให้บริการ API ก่อน';
     }
     if (message.includes('401') || message.toLowerCase().includes('unauthorized')) {
         return 'API/Token ไม่ถูกต้องหรือหมดอายุ กรุณาสร้าง Token ใหม่แล้ววางอีกครั้ง';
     }
+    if (message.includes('403') || message.toLowerCase().includes('forbidden')) {
+        return 'API มีอยู่แต่ยังไม่มีสิทธิ์ใช้บริการนี้ กรุณาเปิดสิทธิ์ของผู้ให้บริการ หรือใช้ API เจ้าอื่น';
+    }
     if (message.includes('sufficient permissions') || message.toLowerCase().includes('permission')) {
-        return 'Token ยังไม่มีสิทธิ์เรียก Hugging Face Inference Providers กรุณาสร้าง Token ใหม่และเปิดสิทธิ์ Inference/Read แล้วนำมาวางอีกครั้ง';
+        return 'Token ยังไม่มีสิทธิ์เรียกบริการสร้างงาน กรุณาสร้าง Token ใหม่และเปิดสิทธิ์ Inference/Read แล้วนำมาวางอีกครั้ง';
     }
     if (message.includes('402') || message.toLowerCase().includes('payment')) {
-        return 'บัญชี API อาจต้องเปิดเครดิตหรือโควตาสำหรับสร้างภาพ/วิดีโอ';
+        return 'บัญชี API ต้องเปิดเครดิตหรือโควตาสำหรับบริการนี้ ฟรีโควตาอาจหมดแล้ว';
+    }
+    if (message.includes('429') || message.toLowerCase().includes('rate limit') || message.toLowerCase().includes('quota')) {
+        return 'API ใช้เกินโควตาหรือโดนจำกัดความถี่ กรุณารอสักครู่ เปลี่ยนโมเดล หรือใช้ API เจ้าอื่น';
     }
     if (message.includes('503') || message.toLowerCase().includes('loading')) {
         return 'โมเดลกำลังโหลดหรือไม่พร้อมใช้งาน กรุณารอสักครู่แล้วลองใหม่';

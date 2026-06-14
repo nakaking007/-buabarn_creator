@@ -1,0 +1,43 @@
+Buabarn VIP - แหล่ง API ฟรี/ทดลองที่แนะนำ
+
+หลักสำคัญ:
+- ไม่มี API ฟรีถาวรที่รับประกันได้ทุกวัน
+- บางเจ้าใช้ฟรีเฉพาะโควตาเริ่มต้น
+- ถ้า Token หมดอายุ, quota หมด, หรือสิทธิ์ไม่พอ ระบบจะแจ้งสาเหตุและให้เปลี่ยน API/โมเดล
+
+1. AI เขียนงาน / สร้าง prompt
+- OpenRouter: https://openrouter.ai/keys
+  ใช้ง่าย มี free model/router เช่น openrouter/free
+- Groq: https://console.groq.com/keys
+  เร็ว เหมาะกับงานข้อความและ prompt
+- Google AI Studio: https://aistudio.google.com/app/apikey
+  ใช้กับ Gemini เหมาะกับงานเขียนและวิเคราะห์
+
+2. สร้างภาพนิ่ง
+- Hugging Face Token: https://huggingface.co/settings/tokens
+  ใช้กับโมเดลภาพ เช่น FLUX / Stable Diffusion ผ่าน Inference Providers
+- fal.ai: https://fal.ai/dashboard/keys
+  มีโมเดลภาพหลายแบบ บางช่วงมีเครดิตฟรี/ทดลอง
+- Replicate: https://replicate.com/account/api-tokens
+  โมเดลเยอะ เหมาะกับงานทดลองหลายแนว
+
+3. สร้างวิดีโอ
+- fal.ai: https://fal.ai/dashboard/keys
+  เหมาะกับวิดีโอ API และโมเดล media
+- Runway: https://dev.runwayml.com
+  เหมาะกับวิดีโอคุณภาพสูง แต่ต้องดูเครดิต/แผนบริการ
+- Replicate: https://replicate.com/account/api-tokens
+  มีโมเดลวิดีโอหลายแบบ ขึ้นกับเครดิตและโควตา
+
+สถานะที่ระบบตรวจได้:
+- 401 = Token ผิดหรือหมดอายุ
+- 402 = ต้องมีเครดิต/ฟรีโควตาหมด
+- 403 = Token ไม่มีสิทธิ์ใช้บริการนั้น
+- 429 = ใช้เกินโควตาหรือ rate limit
+- 503 = โมเดลโหลดไม่ทันหรือยังไม่พร้อม
+
+คำแนะนำใช้งานจริง:
+- ให้กรอก API เขียนงานก่อน เพื่อให้ระบบใช้ AI จริง ไม่ใช่ template
+- ถ้าจะสร้างภาพจริง ให้กรอก API ภาพ
+- ถ้าจะสร้างวิดีโอจริง ให้กรอก API วิดีโอ
+- ถ้า API เจ้าใดหมดโควตา ให้เปลี่ยนไปใช้ลิงก์เจ้าอื่นในหน้า ตั้งค่า

@@ -25,6 +25,7 @@ class EngineLogic {
         this.references = production.references || 'ไม่มีภาพต้นฉบับอ้างอิง';
         this.audioSample = production.audioSample || 'ไม่มีไฟล์เสียง/วิดีโอตัวอย่าง';
         this.customInputs = production.customInputs || 'ผู้ใช้ยังไม่ได้กรอก input เฉพาะหมวดเพิ่มเติม';
+        this.customInputMap = this.parseCustomInputs(this.customInputs);
     }
 
     build(input) {
@@ -38,7 +39,12 @@ class EngineLogic {
             'ต้องใช้มาตรฐานกลางร่วมกับมาตรฐานเฉพาะหมวดงาน',
             'ถ้าไม่เลือกภาพ ห้ามสร้าง prompt ภาพ',
             'ถ้าไม่เลือกวิดีโอ ห้ามสร้าง prompt วิดีโอหรือเสียงประกอบวิดีโอ',
-            'ถ้าเลือกภาพหรือวิดีโอรายฉาก ต้องสร้าง prompt ให้ครบตามจำนวนฉาก'
+            'ถ้าเลือกภาพหรือวิดีโอรายฉาก ต้องสร้าง prompt ให้ครบตามจำนวนฉาก',
+            'Output ต้องแยกหมวดชัดเจน เช่น Concept, Script, Storyboard, Prompt, Caption, QC',
+            'Output ต้องมีข้อมูลพอให้ AI ตัวต่อไปใช้ต่อได้ เช่น ฉาก ตัวละคร แสง กล้อง อารมณ์ วัสดุ และข้อห้าม',
+            'Output ต้องเป็นกึ่งโครงสร้าง เช่น Scene 1, Scene 2, Shot, Prompt, Negative Prompt',
+            'Output ต้องมีหลายชั้น ทั้งชั้นสำหรับคนอ่านเข้าใจ และชั้น prompt สำหรับ AI ภาพ/วิดีโอใช้ต่อ',
+            'ห้ามตอบเป็น template แข็งๆ ต้องวิเคราะห์ input เฉพาะหมวดและขยายรายละเอียดอย่างมีเหตุผล'
         ].join('\n');
         const instruction = [
             `หมวดงาน: ${mission.title}`,
@@ -100,6 +106,9 @@ class EngineLogic {
             '',
             '## 5. มาตรฐานกลางที่ใช้กับงานนี้',
             this.renderBulletList(central.requiredSections),
+            '',
+            '## 5.1 Output 5 ชั้นที่ต้องครบ',
+            this.renderBulletList(central.outputLayers || []),
             '',
             `## 6. มาตรฐานเฉพาะหมวด: ${categorySpec.title}`,
             this.renderBulletList(categorySpec.outputSections),
@@ -204,7 +213,14 @@ class EngineLogic {
     }
 
     buildCoreConcept(input, spec) {
-        return `ผลิตแพ็กเกจคอนเทนต์เรื่อง “${input}” ในหมวด ${spec.title} โดยให้มีโครงเรื่อง ภาพ ฉาก กล้อง แสง เสียง ข้อห้าม และ checklist พร้อมนำไปผลิตต่อจริง`;
+        const deliverables = ['โครงเรื่อง', 'ฉาก', 'กล้อง', 'แสง', 'ข้อห้าม', 'checklist'];
+        if (this.imagePlan === 'scene') {
+            deliverables.push('Prompt ภาพ');
+        }
+        if (this.videoPlan === 'scene') {
+            deliverables.push('Prompt วิดีโอ', 'เสียงประกอบ', 'Voice Over');
+        }
+        return `ผลิตแพ็กเกจคอนเทนต์เรื่อง “${this.buildProductionSubject(input)}” ในหมวด ${spec.title} โดยให้มี${deliverables.join(', ')} พร้อมนำไปผลิตต่อจริง`;
     }
 
     buildTargetAudience() {
@@ -218,6 +234,38 @@ class EngineLogic {
             return 'ครีเอเตอร์ TikTok, YouTube Shorts, Reels และทีมผลิตหนังสั้นแนวตั้ง';
         }
         return 'ครีเอเตอร์ไทย เจ้าของสินค้า เพจคอนเทนต์ และผู้ใช้ AI ที่ต้องการงานพร้อมผลิต';
+    }
+
+    parseCustomInputs(text) {
+        const map = {};
+        String(text || '').split('\n').forEach((line) => {
+            const match = line.match(/^-\s*([^:：]+)[:：]\s*(.+)$/);
+            if (match) {
+                map[match[1].trim()] = match[2].trim();
+            }
+        });
+        return map;
+    }
+
+    getCustomValue(label) {
+        return this.customInputMap?.[label] || '';
+    }
+
+    buildProductionSubject(input) {
+        const title = this.getCustomValue('หัวข้อเรื่อง');
+        const character = this.getCustomValue('ตัวละครหลัก');
+        const location = this.getCustomValue('สถานที่ไทย');
+        const parts = [input];
+        if (title && !input.includes(title)) {
+            parts.push(`หัวข้อเรื่อง: ${title}`);
+        }
+        if (character && !input.includes(character)) {
+            parts.push(`ตัวละครหลัก: ${character}`);
+        }
+        if (location && !input.includes(location)) {
+            parts.push(`สถานที่: ${location}`);
+        }
+        return parts.join(' | ');
     }
 
     buildStoryStructure(input) {
@@ -273,22 +321,29 @@ class EngineLogic {
     }
 
     buildPracticalUseNotes() {
-        return [
-            '- ใช้ Prompt ภาพกับเครื่องมือสร้างภาพ เช่น Hugging Face, Stable Diffusion, Midjourney หรือเครื่องมือที่รองรับ',
-            '- ใช้ Prompt วิดีโอกับ API วิดีโอที่รองรับจริง เช่น fal.ai, Runway หรือ Replicate',
-            '- ใช้ Voice Over เป็นสคริปต์บันทึกเสียง หรือใส่ใน Buabarn Local Video Maker',
-            '- ตรวจ checklist ก่อนส่งงานทุกครั้ง'
-        ].join('\n');
+        const notes = [];
+        if (this.imagePlan === 'scene') {
+            notes.push('- ใช้ Prompt ภาพกับเครื่องมือสร้างภาพ เช่น Hugging Face, Stable Diffusion, Midjourney หรือเครื่องมือที่รองรับ');
+        }
+        if (this.videoPlan === 'scene') {
+            notes.push('- ใช้ Prompt วิดีโอกับ API วิดีโอที่รองรับจริง เช่น fal.ai, Runway หรือ Replicate');
+            notes.push('- ใช้ Voice Over เป็นสคริปต์บันทึกเสียง หรือใส่ใน Buabarn Local Video Maker');
+        }
+        notes.push('- ตรวจ checklist ก่อนส่งงานทุกครั้ง');
+        return notes.join('\n');
     }
 
     renderStoryboardScene(scene, index) {
-        return [
+        const lines = [
             `### ฉากที่ ${index + 1}: ${scene.title}`,
             `ภาพ: ${scene.visual}`,
             `การกระทำ: ${scene.action}`,
-            `กล้อง: ${scene.camera}`,
-            this.videoPlan === 'scene' ? `เสียง: ${scene.sound}` : 'เสียง: ไม่ใส่เสียง เพราะยังไม่เลือกวิดีโอ'
-        ].join('\n');
+            `กล้อง: ${scene.camera}`
+        ];
+        if (this.videoPlan === 'scene') {
+            lines.push(`เสียง: ${scene.sound}`);
+        }
+        return lines.join('\n');
     }
 
     generateSuno(input) {
@@ -397,10 +452,13 @@ class EngineLogic {
 
     makeScenes(input, mission) {
         const count = Math.max(1, Math.min(10, this.sceneCount));
+        const subject = this.buildProductionSubject(input);
+        const location = this.getCustomValue('สถานที่ไทย') || 'สถานที่ไทยสมจริง';
+        const conflict = this.getCustomValue('ปัญหาหลัก') || 'ความรู้สึกบางอย่างที่ตัวละครต้องเผชิญ';
         const templates = [
             {
                 title: 'เปิดเรื่อง',
-                visual: `เห็น ${input} ในบรรยากาศ ${mission.visualMood} แสงแรกค่อย ๆ แตะตัวแบบ`,
+                visual: `เห็น ${subject} ในบรรยากาศ ${mission.visualMood} ที่ ${location} แสงแรกค่อย ๆ แตะตัวแบบ`,
                 action: 'ตัวแบบปรากฏอย่างสง่างาม สร้างความสงสัยและดึงผู้ชมเข้าสู่เรื่อง',
                 camera: 'wide shot, slow push in, soft parallax background',
                 sound: 'เสียงลมเบา ๆ ดนตรีเปิดแบบลึกลับและอบอุ่น',
@@ -408,15 +466,15 @@ class EngineLogic {
             },
             {
                 title: 'เผยรายละเอียด',
-                visual: `กล้องเข้าใกล้รายละเอียดของ ${input} ให้เห็นผิว วัสดุ แสงสะท้อน และอารมณ์`,
-                action: 'ตัวแบบขยับช้า ๆ หรือแสงไล้ผ่าน เผยเสน่ห์หลักของฉาก',
+                visual: `กล้องเข้าใกล้รายละเอียดของ ${subject} ให้เห็นผิว วัสดุ แสงสะท้อน และอารมณ์`,
+                action: `ตัวแบบขยับช้า ๆ หรือหยุดคิดกับ ${conflict} เผยอารมณ์หลักของฉาก`,
                 camera: 'medium close-up, shallow depth of field',
                 sound: 'เสียงประกายแสงและ ambience ของสถานที่',
                 voice: 'เมื่อมองใกล้ขึ้น เราจะเห็นรายละเอียดที่ทำให้ภาพนี้มีความหมายมากกว่าแค่ความสวยงาม'
             },
             {
                 title: 'จุดพีค',
-                visual: `เกิดเหตุการณ์สำคัญรอบ ${input} ทำให้ฉากดูยิ่งใหญ่ขึ้น`,
+                visual: `เกิดเหตุการณ์สำคัญรอบ ${subject} ทำให้ฉากดูยิ่งใหญ่ขึ้น`,
                 action: 'ตัวแบบเผชิญแสงหรือเผยพลังที่เป็นหัวใจของเรื่อง',
                 camera: 'low angle hero shot, slow orbit, cinematic flare',
                 sound: 'ดนตรีขยายกว้างขึ้น มีเสียง rise ก่อนถึงภาพจำ',
@@ -424,7 +482,7 @@ class EngineLogic {
             },
             {
                 title: 'เชื่อมโยงผู้ชม',
-                visual: `${input} อยู่ในมุมที่ผู้ชมเข้าใจอารมณ์และอยากติดตามต่อ`,
+                visual: `${subject} อยู่ในมุมที่ผู้ชมเข้าใจอารมณ์และอยากติดตามต่อ`,
                 action: 'ตัวละครหรือวัตถุหลักเชื่อมกับผู้ชมผ่านสายตา การเคลื่อนไหว หรือบรรยากาศ',
                 camera: 'smooth tracking shot, clean center composition',
                 sound: 'ดนตรีลดพื้นที่ให้เสียงบรรยายเด่นขึ้น',
@@ -432,7 +490,7 @@ class EngineLogic {
             },
             {
                 title: 'ปิดด้วยภาพจำ',
-                visual: `ภาพสุดท้ายของ ${input} สวย คม และจำง่ายบนมือถือ`,
+                visual: `ภาพสุดท้ายของ ${subject} สวย คม และจำง่ายบนมือถือ`,
                 action: 'ตัวแบบหยุดในท่าที่ทรงพลัง พร้อมปิดอารมณ์เรื่อง',
                 camera: 'final hero frame, slow pull back, clean negative space',
                 sound: 'ดนตรีจบแบบ warm resolve',
@@ -443,10 +501,13 @@ class EngineLogic {
     }
 
     buildSceneImagePrompt(input, mission, scene, index) {
+        const subject = this.buildProductionSubject(input);
+        const customBrief = this.customInputs.startsWith('ผู้ใช้ยังไม่ได้กรอก') ? '' : `category brief: ${this.customInputs.replace(/\n/g, '; ')}`;
         if (this.mission === 'naga' || input.includes('นาค')) {
             return [
                 `Scene ${index + 1}: Ultra realistic Thai Naga fantasy cinematic still, ${scene.visual}`,
-                `main story: ${input}`,
+                `main story: ${subject}`,
+                customBrief,
                 'beautiful young Thai woman in elegant flowing white dress, full moon night, sacred riverbank, misty Mekong atmosphere',
                 'massive black Thai Naga serpent, obsidian scales, glowing red eyes, authentic Thai Naga identity, elegant sacred serpent body, no dragon legs, no claws, no Chinese dragon moustache, no dragon beard',
                 'Thai Naga anatomy lock: one single horn centered on the head, high back fin or crest along the spine, ornate Thai gold body ornaments, sacred crystal orb, smooth serpent body, Thai temple mythology details',
@@ -457,7 +518,8 @@ class EngineLogic {
         }
         return [
             `Scene ${index + 1}: ${mission.style}, ${scene.visual}`,
-            `main subject: ${input}`,
+            `main subject: ${subject}`,
+            customBrief,
             `camera: ${scene.camera}, vertical 9:16, premium cinematic composition`,
             'lighting: soft cinematic rim light, warm highlight, controlled shadow, beautiful contrast',
             'quality: ultra detailed, high resolution, sharp focus, no text, no watermark'
@@ -465,10 +527,13 @@ class EngineLogic {
     }
 
     buildSceneVideoPrompt(input, mission, scene, index) {
+        const subject = this.buildProductionSubject(input);
+        const customBrief = this.customInputs.startsWith('ผู้ใช้ยังไม่ได้กรอก') ? '' : `category brief: ${this.customInputs.replace(/\n/g, '; ')}`;
         if (this.mission === 'naga' || input.includes('นาค')) {
             return [
                 `Scene ${index + 1} video prompt: cinematic Thai Naga legend, ${scene.visual}`,
-                `main story: ${input}`,
+                `main story: ${subject}`,
+                customBrief,
                 `action: ${scene.action}`,
                 'identity lock: authentic Thai Naga serpent, one single horn centered on head, high back fin or crest, ornate Thai gold body ornaments, sacred crystal orb, smooth long serpent body',
                 'avoid: Chinese dragon, dragon legs, claws, moustache, beard, western dragon wings, monster lizard anatomy',
@@ -479,6 +544,8 @@ class EngineLogic {
         }
         return [
             `Scene ${index + 1} video prompt: ${mission.style}, ${scene.visual}`,
+            `main story: ${subject}`,
+            customBrief,
             `action: ${scene.action}`,
             `camera movement: ${scene.camera}, smooth cinematic motion, 3-5 seconds`,
             `mood: ${this.tone}, emotional pacing, stable subject continuity`,

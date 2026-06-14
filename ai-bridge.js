@@ -80,7 +80,7 @@ const AIBridge = {
     },
 
     async generate({ config, instruction, context }) {
-        if (!config.enabled || !config.apiKey) {
+        if (!config.apiKey) {
             return {
                 source: 'local-orchestrator',
                 text: '',
@@ -101,7 +101,7 @@ const AIBridge = {
 
     async generateWithOpenAI(config, instruction, context) {
         const endpoint = getOpenAiEndpoint(config);
-        const model = getOpenAiModel(config);
+        const modelCandidates = getOpenAiModelCandidates(config);
         const apiKey = cleanHeaderValue(config.apiKey);
         const headers = {
             'Content-Type': 'application/json',
@@ -111,23 +111,31 @@ const AIBridge = {
             headers['HTTP-Referer'] = 'https://buabarn.vip';
             headers['X-Title'] = 'Buabarn VIP Creater Tools';
         }
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-                model,
-                messages: [
-                    { role: 'system', content: context.system },
-                    { role: 'user', content: instruction }
-                ],
-                temperature: 0.8
-            })
-        });
-        const data = await parseAiResponse(response);
-        return {
-            source: model,
-            text: data.choices?.[0]?.message?.content || JSON.stringify(data, null, 2)
-        };
+        const errors = [];
+        for (const model of modelCandidates) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        model,
+                        messages: [
+                            { role: 'system', content: context.system },
+                            { role: 'user', content: instruction }
+                        ],
+                        temperature: 0.8
+                    })
+                });
+                const data = await parseAiResponse(response);
+                return {
+                    source: model,
+                    text: data.choices?.[0]?.message?.content || JSON.stringify(data, null, 2)
+                };
+            } catch (error) {
+                errors.push(`${model}: ${error.message}`);
+            }
+        }
+        throw new Error(errors.join('\n'));
     },
 
     async generateWithGemini(config, instruction, context) {
@@ -178,7 +186,10 @@ const AIBridge = {
             return null;
         }
 
-        const model = config.model || 'black-forest-labs/FLUX.1-schnell';
+        const modelCandidates = getMediaModelCandidates(config.model, [
+            'black-forest-labs/FLUX.1-schnell',
+            'stabilityai/stable-diffusion-xl-base-1.0'
+        ]);
         const apiKey = cleanHeaderValue(config.apiKey);
         const payload = {
             inputs: prompt,
@@ -187,19 +198,26 @@ const AIBridge = {
                 num_inference_steps: 4
             }
         };
-        const response = await fetchHuggingFaceModel({
-            model,
-            apiKey,
-            accept: 'image/png',
-            payload
-        });
-
-        const blob = await response.blob();
-        return {
-            source: model,
-            blob,
-            url: URL.createObjectURL(blob)
-        };
+        const errors = [];
+        for (const model of modelCandidates) {
+            try {
+                const response = await fetchHuggingFaceModel({
+                    model,
+                    apiKey,
+                    accept: 'image/png',
+                    payload
+                });
+                const blob = await response.blob();
+                return {
+                    source: model,
+                    blob,
+                    url: URL.createObjectURL(blob)
+                };
+            } catch (error) {
+                errors.push(`${model}: ${error.message}`);
+            }
+        }
+        throw new Error(errors.join('\n'));
     },
 
     async generateVideo({ config, prompt }) {
@@ -207,7 +225,10 @@ const AIBridge = {
             return null;
         }
 
-        const model = config.model || 'Wan-AI/Wan2.2-TI2V-5B';
+        const modelCandidates = getMediaModelCandidates(config.model, [
+            'Wan-AI/Wan2.2-TI2V-5B',
+            'Wan-AI/Wan2.1-T2V-1.3B'
+        ]);
         const apiKey = cleanHeaderValue(config.apiKey);
         const payload = {
             inputs: prompt,
@@ -216,19 +237,26 @@ const AIBridge = {
                 num_inference_steps: 4
             }
         };
-        const response = await fetchHuggingFaceModel({
-            model,
-            apiKey,
-            accept: 'video/mp4',
-            payload
-        });
-
-        const blob = await response.blob();
-        return {
-            source: model,
-            blob,
-            url: URL.createObjectURL(blob)
-        };
+        const errors = [];
+        for (const model of modelCandidates) {
+            try {
+                const response = await fetchHuggingFaceModel({
+                    model,
+                    apiKey,
+                    accept: 'video/mp4',
+                    payload
+                });
+                const blob = await response.blob();
+                return {
+                    source: model,
+                    blob,
+                    url: URL.createObjectURL(blob)
+                };
+            } catch (error) {
+                errors.push(`${model}: ${error.message}`);
+            }
+        }
+        throw new Error(errors.join('\n'));
     }
 };
 
@@ -264,11 +292,45 @@ function getOpenAiModel(config) {
     return 'gpt-4.1-mini';
 }
 
+function getOpenAiModelCandidates(config) {
+    if (config.model) {
+        return [config.model];
+    }
+
+    if (config.provider === 'openrouter') {
+        return [
+            'openrouter/free',
+            'deepseek/deepseek-r1:free',
+            'google/gemini-2.0-flash-exp:free'
+        ];
+    }
+
+    if (config.provider === 'groq') {
+        return [
+            'llama-3.3-70b-versatile',
+            'llama-3.1-8b-instant'
+        ];
+    }
+
+    return [getOpenAiModel(config)];
+}
+
+function getMediaModelCandidates(model, defaults) {
+    if (!model) {
+        return defaults;
+    }
+    const manual = String(model)
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+    return [...new Set([...manual, ...defaults])];
+}
+
 async function parseAiResponse(response) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
         const message = data.error?.message || data.error || response.statusText;
-        throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
+        throw new Error(`${response.status} ${typeof message === 'string' ? message : JSON.stringify(message)}`);
     }
     return data;
 }
